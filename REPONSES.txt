@@ -1,0 +1,34 @@
+---------------------------------------------------------
+FICHIER REPONSES - TP OS
+---------------------------------------------------------
+
+--- PARTIE A : COMMANDES DE BASE ---
+Q1) Le PID est l'identifiant unique d'un processus. Le PPID est l'identifiant du processus parent.
+Q2) Si on tue le parent, l'enfant devient orphelin et est adopté par init (PID 1) ou systemd.
+Q3) 'strace' sert à tracer les appels système (dialogue programme-noyau).
+Q4) Un fichier est identifié par un descripteur de fichier (FD), un nombre entier.
+Q5) 0=Entrée (stdin), 1=Sortie (stdout), 2=Erreur (stderr).
+Q6) Commande : lsof -u $USER
+Q7) /proc est un système de fichiers virtuel qui montre l'état du noyau/matériel en direct.
+Q8) 'pmap' affiche la carte mémoire (adresses virtuelles) d'un processus.
+Q9) VIRT = Mémoire virtuelle totale. RES = Mémoire physique (RAM) réellement utilisée.
+
+--- PARTIE B : ISOLATION ---
+Q10) Commande : unshare --fork --pid --mount-proc bash
+Q11) 'ps aux' ne montre que les processus de la bulle (PID 1 et ps).
+Q12) Le shell a le PID 1 car il est le premier processus de ce namespace.
+
+--- BONUS B2 : CGROUPS ---
+Q13) La limitation vit dans le Cgroup (gérée par le noyau).
+Q14) Vérification : cat /proc/self/cgroup (on voit un slice systemd spécifique).
+
+--- BONUS B3 : CAPABILITIES ---
+Q15) Une capability est une permission root découpée (principe du moindre privilège), plus sûr que SetUID qui donne tous les droits.
+Q16) Ping veut 'cap_net_raw' pour ouvrir des raw sockets et envoyer des paquets ICMP.
+
+--- BONUS B4 : RECHERCHE (R3) ---
+Thème R3 : Namespaces et conteneurs
+Un conteneur est l'assemblage des Namespaces (isolation vue) et Cgroups (limitation ressources).
+4 Namespaces clés : PID (processus), NET (réseau), MNT (fichiers), USER (utilisateurs).
+Limites : Le noyau est partagé avec l'hôte. Une faille kernel touche tout le monde.
+Sources : Man7.org, Red Hat documentation.
