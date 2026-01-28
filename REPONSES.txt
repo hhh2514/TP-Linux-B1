@@ -1,34 +1,108 @@
----------------------------------------------------------
-FICHIER REPONSES - TP OS
----------------------------------------------------------
+PARTIE A — ESSENTIEL
+Q1) Citez 3 syscalls vus dans trace_cat_filtre.txt et expliquez leur rôle “fonctionnel”.
 
---- PARTIE A : COMMANDES DE BASE ---
-Q1) Le PID est l'identifiant unique d'un processus. Le PPID est l'identifiant du processus parent.
-Q2) Si on tue le parent, l'enfant devient orphelin et est adopté par init (PID 1) ou systemd.
-Q3) 'strace' sert à tracer les appels système (dialogue programme-noyau).
-Q4) Un fichier est identifié par un descripteur de fichier (FD), un nombre entier.
-Q5) 0=Entrée (stdin), 1=Sortie (stdout), 2=Erreur (stderr).
-Q6) Commande : lsof -u $USER
-Q7) /proc est un système de fichiers virtuel qui montre l'état du noyau/matériel en direct.
-Q8) 'pmap' affiche la carte mémoire (adresses virtuelles) d'un processus.
-Q9) VIRT = Mémoire virtuelle totale. RES = Mémoire physique (RAM) réellement utilisée.
+openat : Demande au noyau d’ouvrir un fichier pour obtenir un numéro d’identification (descripteur) afin de pouvoir le manipuler.
 
---- PARTIE B : ISOLATION ---
-Q10) Commande : unshare --fork --pid --mount-proc bash
-Q11) 'ps aux' ne montre que les processus de la bulle (PID 1 et ps).
-Q12) Le shell a le PID 1 car il est le premier processus de ce namespace.
+read : Demande au noyau de lire les données d'un fichier et de les placer dans une zone mémoire.
 
---- BONUS B2 : CGROUPS ---
-Q13) La limitation vit dans le Cgroup (gérée par le noyau).
-Q14) Vérification : cat /proc/self/cgroup (on voit un slice systemd spécifique).
+close : Permet de fermer le fichier et de libérer le descripteur utilisé par le système.
 
---- BONUS B3 : CAPABILITIES ---
-Q15) Une capability est une permission root découpée (principe du moindre privilège), plus sûr que SetUID qui donne tous les droits.
-Q16) Ping veut 'cap_net_raw' pour ouvrir des raw sockets et envoyer des paquets ICMP.
+Q2) Trouvez un openat(...). Quel est le chemin ouvert ? Avec quel type d’accès (lecture/écriture) ?
 
---- BONUS B4 : RECHERCHE (R3) ---
-Thème R3 : Namespaces et conteneurs
-Un conteneur est l'assemblage des Namespaces (isolation vue) et Cgroups (limitation ressources).
-4 Namespaces clés : PID (processus), NET (réseau), MNT (fichiers), USER (utilisateurs).
-Limites : Le noyau est partagé avec l'hôte. Une faille kernel touche tout le monde.
-Sources : Man7.org, Red Hat documentation.
+Le chemin ouvert est /lib/x86_64-linux-gnu/libc.so.6.
+
+Le type d'accès est en mode lecture seule (O_RDONLY).
+
+Q3) Trouvez au moins un code d’erreur (errno) dans trace_ls.txt OU trace_cat.txt. Donnez son nom et interprétez-le.
+
+Code : ENOENT (No such file or directory).
+
+Interprétation : Le système a cherché un fichier de configuration optionnel qui n'existait pas sur le disque lors du lancement du programme.
+
+Q4) Dans /proc/<pid>/fd, quels numéros de FD correspondent typiquement à stdin/stdout/stderr ?
+
+0 : stdin (Entrée standard).
+
+1 : stdout (Sortie standard).
+
+2 : stderr (Erreur standard).
+
+Q5) Quelle différence voyez-vous entre fd_list.txt et fd_list_redir.txt ?
+
+Dans fd_list.txt, les descripteurs 1 (stdout) et 2 (stderr) pointent vers le terminal interactif.
+
+Dans fd_list_redir.txt, ils pointent vers les fichiers out.txt et err.txt.
+
+Cela démontre que la redirection modifie la destination des descripteurs au niveau système sans que le programme n'ait besoin d'être modifié.
+
+Q6) Dans lsof, repérez au moins 1 ligne “REG” et 1 ligne “CHR”. Expliquez ce que ça suggère.
+
+REG : Correspond à un fichier régulier stocké sur le disque (ex: /usr/bin/bash).
+
+CHR : Correspond à un périphérique de type "caractère", suggérant que la sortie est dirigée vers un terminal interactif.
+
+Q7) Comparez VmSize (VSZ) et VmRSS (RSS). Pourquoi peuvent-ils être très différents ?
+
+VSZ est la taille de la mémoire virtuelle réservée (la promesse d'espace faite par l'OS).
+
+VmRSS est la taille de la mémoire physique réellement occupée en RAM à l'instant T.
+
+Ils diffèrent car l'OS n'alloue physiquement la RAM que lorsque le programme en a réellement besoin (allocation paresseuse).
+
+Q8) Dans pmap, repérez une zone “anon” ou “heap”. Que représente-t-elle ?
+
+La zone anon représente de la mémoire vive "anonyme", non liée à un fichier sur le disque dur.
+
+C'est l'espace où le programme stocke ses variables et données dynamiques en cours d'exécution.
+
+Q9) Que signifie “nice” ? Quel effet attendu quand on augmente le nice (ex: +10) ?
+
+Nice définit le degré de priorité d'un processus.
+
+Augmenter le nice rend le processus plus "gentil" : il laisse passer les autres avant lui et reçoit moins de temps de calcul en cas de forte charge.
+
+Q10) Qu’observez-vous sur la répartition CPU ?
+
+Sur une machine multi-cœurs, les processus peuvent chacun consommer 100% du CPU.
+
+Cependant, le processus avec un nice élevé accumule moins de temps de calcul cumulé, montrant qu'il reste moins prioritaire pour l'ordonnanceur.
+
+PARTIE B — BONUS
+Q11) Pourquoi êtes-vous souvent PID 1 dans ce shell ?
+
+C'est l'effet du namespace PID (monde parallèle) : les compteurs de processus sont réinitialisés.
+
+Le terminal étant le premier programme lancé dans cet espace isolé, il reçoit le numéro 1.
+
+Q12) Qu’est-ce qui change dans la liste des processus (ps) ? Qu’est-ce qui ne change pas ?
+
+Ce qui change : On ne voit que les processus internes à la bulle isolée et la numérotation est réinitialisée.
+
+Ce qui ne change pas : Le noyau Linux gère toujours l'ensemble du système et l'accès aux fichiers et commandes reste possible.
+
+Q13) Où “vit” la limitation (conceptuellement) : processus ? noyau ? groupe de contrôle ?
+
+La limitation vit dans le Groupe de Contrôle (cgroup).
+
+C'est le noyau qui impose les barrières de ressources définies par les règles du cgroup.
+
+Q14) Comment vérifier que vous êtes dans un cgroup ?
+
+En lançant la commande cat /proc/self/cgroup.
+
+On observe un chemin spécifique indiquant que le shell est isolé dans une unité de contrôle restreinte.
+
+Q15) Qu’est-ce qu’une capability ? Pourquoi c’est plus fin qu’un binaire setuid root ?
+
+C'est une permission root découpée en petits privilèges indépendants.
+
+C'est plus sûr que le SetUID car on ne donne que le droit strictement nécessaire à la tâche, limitant les risques en cas de faille de sécurité.
+
+Q16) À votre avis, quelle permission réseau ping cherche-t-il à obtenir ?
+
+ping cherche à obtenir la capability cap_net_raw.
+
+Elle lui permet d'ouvrir des sockets bruts pour fabriquer et envoyer des paquets ICMP de bas niveau.
+
+SYNTHÈSE (A5)
+Ce TP a mis en évidence le rôle d'abstraction de l'OS. L'appel système write() permet d'envoyer des données sans gérer le matériel, et les descripteurs de fichiers uniformisent l'accès aux flux. L'OS arbitre le CPU via l'ordonnanceur (priorités nice) et optimise la mémoire en distinguant la réservation virtuelle (VSZ) de l'occupation réelle (RSS). Enfin, l'isolation moderne repose sur les Namespaces et les Cgroups.
