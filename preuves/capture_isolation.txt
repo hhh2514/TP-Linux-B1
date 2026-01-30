@@ -1,0 +1,2 @@
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  100  0.1  22588  4096 pts/3    R+   23:55   0:00 ps aux
